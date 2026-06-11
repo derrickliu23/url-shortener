@@ -4,7 +4,8 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.staticfiles import StaticFiles
 
 # RedirectResponse sends the user to a different URL
-from fastapi.responses import RedirectResponse
+# For getting the link
+from fastapi.responses import RedirectResponse, FileResponse
 
 # BaseModel is used to define the shape of request/response data
 from pydantic import BaseModel
@@ -58,3 +59,8 @@ def redirect_url(code: str, db: Session = Depends(get_db)):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+# serve the HTML UI at the root URL
+@app.get("/")
+def serve_ui():
+    return FileResponse("static/index.html")

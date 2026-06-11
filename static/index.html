@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dievs URL Shortener</title>
+  <style>
+    /* reset default browser styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      /* center everything vertically and horizontally */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #0f0f0f;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #f0f0f0;
+    }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 40px;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    p.subtitle {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 28px;
+    }
+
+    /* the URL input field */
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      color: #f0f0f0;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    input:focus {
+      border-color: #555;
+    }
+
+    /* the shorten button */
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #f0f0f0;
+      color: #0f0f0f;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ddd;
+    }
+
+    /* the result box — hidden until a short URL is generated */
+    .result {
+      display: none;
+      margin-top: 24px;
+      padding: 16px;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+    }
+
+    .result.visible {
+      /* adding this class makes the result box appear */
+      display: block;
+    }
+
+    .result label {
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .result .short-url {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 6px 0 12px;
+      color: #f0f0f0;
+    }
+
+    .copy-btn {
+      width: auto;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      background: #2a2a2a;
+      color: #f0f0f0;
+      border-radius: 6px;
+    }
+
+    .copy-btn:hover {
+      background: #333;
+    }
+
+    /* error message */
+    .error {
+      display: none;
+      margin-top: 12px;
+      font-size: 13px;
+      color: #e05a5a;
+    }
+
+    .error.visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>URL Shortener</h1>
+    <p class="subtitle">Paste a long URL and get a short one back.</p>
+
+    <!-- input field for the long URL -->
+    <input
+      type="text"
+      id="url-input"
+      placeholder="https://example.com/very/long/url"
+    />
+
+    <!-- clicking this calls shortenURL() -->
+    <button onclick="shortenURL()">Shorten</button>
+
+    <!-- error message — shown if something goes wrong -->
+    <p class="error" id="error">Please enter a valid URL.</p>
+
+    <!-- result box — shown after a successful shorten -->
+    <div class="result" id="result">
+      <label>Your short URL</label>
+      <p class="short-url" id="short-url"></p>
+      <button class="copy-btn" onclick="copyURL()">Copy</button>
+    </div>
+  </div>
+
+  <script>
+    async function shortenURL() {
+      const input = document.getElementById("url-input");
+      const error = document.getElementById("error");
+      const result = document.getElementById("result");
+      const shortUrlEl = document.getElementById("short-url");
+
+      // grab the value the user typed
+      const url = input.value.trim();
+
+      // hide previous results and errors
+      result.classList.remove("visible");
+      error.classList.remove("visible");
+
+      // basic validation — must start with http
+      if (!url.startsWith("http")) {
+        error.classList.add("visible");
+        return;
+      }
+
+      // send a POST request to our FastAPI backend
+      // fetch is the browser's built-in way to make HTTP requests
+      const response = await fetch("/shorten", {
+        method: "POST",
+        headers: {
+          // tell the backend we're sending JSON
+          "Content-Type": "application/json"
+        },
+        // convert the JS object to a JSON string
+        body: JSON.stringify({ url })
+      });
+
+      if (response.ok) {
+        // parse the JSON response from FastAPI
+        const data = await response.json();
+
+        // display the short URL
+        shortUrlEl.textContent = data.short_url;
+        result.classList.add("visible");
+      } else {
+        error.textContent = "Something went wrong. Try again.";
+        error.classList.add("visible");
+      }
+    }
+
+    function copyURL() {
+      const shortUrl = document.getElementById("short-url").textContent;
+
+      // navigator.clipboard is the browser API for copying to clipboard
+      navigator.clipboard.writeText(shortUrl).then(() => {
+        const btn = document.querySelector(".copy-btn");
+        btn.textContent = "Copied!";
+
+        // reset button text after 2 seconds
+        setTimeout(() => {
+          btn.textContent = "Copy";
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
