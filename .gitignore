@@ -216,3 +216,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Other
+# database file — no need to commit this
+url_shortener.db
+
+# Mac metadata
+.DS_Store
+
+# Python
+venv/
+__pycache__/
+*.pyc
